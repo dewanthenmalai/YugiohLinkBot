@@ -20,7 +20,7 @@ SPELL_CARD_TEMPLATE_EXPANDED = ('{name}{image} - {wikia}{infosyntax}{pricedata}\
                                 '^({stats})\n\n'
                                 '{text}')
 
-SIGNATURE = '^^To ^^use: ^^{Normal} ^^or ^^{{Expanded}} ^^| [^^Issues?](http://www.reddit.com/message/compose/?to=Nihilate) ^^| [^^Source](https://github.com/Nihilate/YugiohLinkBot)'
+SIGNATURE = '^^To ^^use: ^^{Normal} ^^or ^^{{Expanded}} ^^| ^^[Issues?](http://www.reddit.com/message/compose/?to=dewey-defeats-truman) ^^| ^^[Source](https://github.com/dewanthenmalai/YugiohLinkBot)'
 
 def getSignature():
     return SIGNATURE
@@ -30,7 +30,7 @@ def formatCardData(card, isExpanded):
         if isExpanded:
             requestStats = DatabaseHandler.getStats(card['name'])
             
-            if card['cardtype'].lower() == 'monster':
+            if card['cardtype'] == 'Monster Card':
                 return MONSTER_CARD_TEMPLATE_EXPANDED.format(
                     name = '[**{}**]'.format(card['name']),
                     image = '({})'.format(card['image']) if card['image'] else '(http://i.imgur.com/paNkvJ5.jpg)',
@@ -64,7 +64,7 @@ def formatCardData(card, isExpanded):
                         total=requestStats['total'],
                         percentage=str(round(requestStats['totalAsPercentage'],2))))
         else:
-            if card['cardtype'].lower() == 'monster':
+            if card['cardtype'].lower() == 'Monster Card':
                 return MONSTER_CARD_TEMPLATE_NORMAL.format(
                     name = '[**{}**]'.format(card['name']),
                     image = '({})'.format(card['image']) if card['image'] else '(http://i.imgur.com/paNkvJ5.jpg)',

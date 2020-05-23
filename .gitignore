@@ -62,3 +62,6 @@ Config.py
 
 #SQLite stuff
 *.db
+
+# VS Code stuff
+.vscode/

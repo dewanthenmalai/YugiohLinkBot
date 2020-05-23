@@ -9,9 +9,9 @@ class SubmissionProcessor(object):
         self.requestHandler = requestHandler
 
     def processSubmissions(self, num):
-        subreddits = self.reddit.get_subreddit(self.subredditList)
+        subreddits = self.reddit.subreddit(self.subredditList)
         
-        for submission in subreddits.get_new(limit=num):
+        for submission in subreddits.new(limit=num):
             #If we've already seen this submission, ignore it
             if DatabaseHandler.commentExists(submission.id):
                 continue
@@ -30,7 +30,7 @@ class SubmissionProcessor(object):
 
             try:
                 if reply:
-                    cards = re.findall('\[\*\*(.+?)\*\*\]\(', reply)
+                    cards = re.findall(r'\[\*\*(.+?)\*\*\]\(', reply)
                     for card in cards:
                         DatabaseHandler.addRequest(card, author, submission.subreddit)
 
@@ -54,7 +54,7 @@ class SubmissionProcessor(object):
         links = []
 
         #find and store all links using regex
-        for match in re.finditer("\((http:[^)]*)\)", reply, re.S):
+        for match in re.finditer(r"\((http:[^)]*)\)", reply, re.S):
             links.append(match.group(1))
 
         #change the case
@@ -64,7 +64,7 @@ class SubmissionProcessor(object):
             reply = reply.lower()
 
         #replace the links with the original ones we stored
-        for idx, match in enumerate(re.finditer("\((http:[^)]*)\)", reply, re.I)):
+        for idx, match in enumerate(re.finditer(r"\((http:[^)]*)\)", reply, re.I)):
             reply = reply.replace(match.group(1), links[idx])
 
         return reply

@@ -17,9 +17,11 @@ class YugiohLinkBot(object):
         self.requestHandler = RequestHandler()
 
         #Set up reddit
-        self.reddit = praw.Reddit(Config.useragent)
-        self.reddit.set_oauth_app_info(client_id=Config.appid, client_secret=Config.appsecret, redirect_uri=Config.redirecturi)
-        self.reddit.refresh_access_information(Config.refreshtoken)
+        self.reddit = praw.Reddit(client_id=Config.appid,
+                             client_secret=Config.appsecret,
+                             user_agent=Config.useragent,
+                             username=Config.username,
+                             password=Config.password)
         print("Connected to Reddit")
 
         self.submissionProcessor = SubmissionProcessor(self.reddit, subredditList, self.requestHandler)
@@ -30,7 +32,7 @@ class YugiohLinkBot(object):
     def run(self):
         try:
             print("Starting stream")
-            commentStream = praw.helpers.comment_stream(self.reddit, self.subredditList, limit=1000, verbosity=0)
+            commentStream = self.reddit.subreddit(self.subredditList).stream.comments()
 
             for comment in commentStream:
                 
@@ -54,14 +56,14 @@ class YugiohLinkBot(object):
                     continue
 
                 #If this is one of our own comments, ignore it
-                if (author == 'YugiohLinkBot'):
+                if (author == 'YGOLinkBot'):
                     continue
 
                 reply = self.requestHandler.buildResponse(comment.body)                
 
                 try:
                     if reply:
-                        cards = re.findall('\[\*\*(.+?)\*\*\]\(', reply)
+                        cards = re.findall(r'\[\*\*(.+?)\*\*\]\(', reply)
                         for card in cards:
                             DatabaseHandler.addRequest(card, author, comment.subreddit)
 
@@ -70,8 +72,8 @@ class YugiohLinkBot(object):
                         elif("happiness thread" in comment.link_title):
                             reply = self.submissionProcessor.convertCase(False, reply)
                         
-                        DatabaseHandler.addComment(comment.id, author, comment.subreddit, True)
                         comment.reply(reply)
+                        DatabaseHandler.addComment(comment.id, author, comment.subreddit, True)
                         print("Comment made.\n")
                     else:
                         if ('{' in comment.body and '}' in comment.body):

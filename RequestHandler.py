@@ -6,9 +6,9 @@ from CommentBuilder import getSignature
 
 class RequestHandler(object):
     # Normal - e.g. {Blue-Eyes White Dragon}
-    normalRequestQuery = re.compile("(?<=(?<!\{)\{)([^{}]*)(?=\}(?!\}))")
+    normalRequestQuery = re.compile(r"(?<=(?<!\{)\{)([^{}]*)(?=\}(?!\}))")
     # Expanded - e.g. {{Blue-Eyes White Dragon}}
-    expandedRequestQuery = re.compile("\{{2}([^}]*)\}{2}")
+    expandedRequestQuery = re.compile(r"\{{2}([^}]*)\}{2}")
 
     
     def __init__(self):

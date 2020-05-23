@@ -19,7 +19,7 @@ def setup():
     try:
         cur.execute('CREATE TABLE cardnames (id SERIAL PRIMARY KEY, name varchar(320))')
         conn.commit()
-    except Exception as e:
+    except Exception:
         cur.execute('ROLLBACK')
         conn.commit()
 
@@ -27,7 +27,7 @@ def setup():
     try:
         cur.execute('CREATE TABLE requests (id SERIAL PRIMARY KEY, name varchar(320), requester varchar(50), subreddit varchar(50), requesttimestamp timestamp DEFAULT current_timestamp)')
         conn.commit()
-    except Exception as e:
+    except Exception:
         cur.execute('ROLLBACK')
         conn.commit()
 
@@ -35,7 +35,7 @@ def setup():
     try:
         cur.execute('CREATE TABLE comments (commentid varchar(16) PRIMARY KEY, commenter varchar(50), subreddit varchar(50), hadRequest boolean, requesttimestamp timestamp DEFAULT current_timestamp)')
         conn.commit()
-    except Exception as e:
+    except Exception:
         cur.execute('ROLLBACK')
         conn.commit()
 
@@ -86,7 +86,7 @@ def addComment(commentid, requester, subreddit, hadRequest):
         
         cur.execute('INSERT INTO comments (commentid, commenter, subreddit, hadRequest) VALUES (%s, %s, %s, %s)', (commentid, requester, subreddit, hadRequest))
         conn.commit()
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
@@ -99,7 +99,7 @@ def commentExists(commentid):
             return False
         else:
             return True
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
@@ -113,7 +113,7 @@ def addRequest(name, requester, subreddit):
         if ('nihilate' not in subreddit):
             cur.execute('INSERT INTO requests (name, requester, subreddit) VALUES (%s, %s, %s)', (name, requester, subreddit))
             conn.commit()
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()
@@ -151,7 +151,7 @@ def getStats(searchText):
 
         return requestDict
 
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         cur.execute('ROLLBACK')
         conn.commit()

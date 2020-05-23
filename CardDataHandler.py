@@ -68,7 +68,7 @@ def getTCGCardData(cardName):
         if response.ok:
             json = response.json()
             if json.get('status', '') == 'success':
-                json['data']['image'] = getTCGCardImage(cardName);
+                json['data']['image'] = getTCGCardImage(cardName)
                 return json['data']
 
 def getOCGCardData(url):
@@ -76,75 +76,53 @@ def getOCGCardData(url):
         html = requests.get(url)
         ocg = pq(html.text)
 
-        card = ocg('.cardtable')
-        statuses = ocg('.cardtablestatuses')
+        cardtable = list(ocg('table[class="innertable"]')('tbody').items('tr'))
+
+        print("In getOCDCardData")
 
         data = {
-            'image': (card.find('td.cardtable-cardimage').eq(0)
-                      .find('img').eq(0).attr('data-src')),
-            'name': (card.find('th.cardtable-header').eq(0).text()),
-            'type': ('trap' if card.find('a[title="Trap Card"]') else
-                     ('spell' if card.find('a[title="Spell Card"]') else
-                      ('monster' if card.find('th a[title="Type"]') else
-                       'other')))
+            'image': ocg('div[class="cardtable-main_image-wrapper"]')('a img').attr["src"],
+            'name': ocg('h1[id="firstHeading"]').text(),
+            'type': cardtable[0]('td p a').attr["title"]
         }
 
-        if (data['type'] == 'monster'):
-            data['monster_attribute'] = (card.find('th a[title="Attribute"]')
-                                         .eq(0).parents('tr').eq(0)
-                                         .find('td a').eq(0).text())
+        if (data['type'] == 'Monster Card'):
+            data['monster_attribute'] = cardtable[1]('td p a').attr["title"]
 
-            data['monster_types'] = [monster_type.strip() for monster_type in (process_string(
-                card.find('th a[title="Type"]').eq(0).parents('tr').eq(0)
-                .find('td').eq(0).text())).split('/')]
+            data['monster_types'] = [monster_type.text().strip() for monster_type in cardtable[2]('td p').items("a")]
 
             if 'Link' in data['monster_types']:
-                data['monster_level'] = ' / '.join(str(process_string(
-                    card.find('th a[title="Link Arrow"]').eq(0).parents('tr').eq(0)
-                    .find('td a').text())).split(' '))
-            elif 'Xyz' in data['monster_types']:
-                data['monster_level'] = int(process_string(
-                    card.find('th a[title="Rank"]').eq(0).parents('tr').eq(0)
-                    .find('td a').eq(0).text()))
+                data['monster_level'] = '/'.join([linkarrow.text() for linkarrow in list(cardtable[3]('td div').items("div"))[0].items("a")][8:])
             else:
-                data['monster_level'] = int(process_string(
-                    card.find('th a[title="Level"]').eq(0).parents('tr').eq(0)
-                    .find('td a').eq(0).text()))
+                data['monster_level'] = int(list(cardtable[3]('td p').items("a"))[0].text())
 
             if 'Pendulum' in data['monster_types']:
-                data['pendulum_scale'] = int(process_string(
-                    card.find('th a[title="Pendulum Scale"]').eq(0).parents('tr').eq(0)
-                    .find('td a').eq(1).text()))
+                data['pendulum_scale'] = int(list(cardtable[4]('td p').items("a"))[1].text())
+                atk_def = [value.text() for value in cardtable[5]('td p').items("a")]
             else:
                 data['pendulum_scale'] = None
-            
-            atk_def = (card.find('th a[title="ATK"]').eq(0)
-                       .parents('tr').eq(0).find('td').eq(0).text()).split('/')
+                atk_def = [value.text() for value in cardtable[4]('td p').items("a")]
      
             data['monster_attack'] = process_string(atk_def[0])
             data['monster_defense'] = process_string(atk_def[1])
      
-        elif (data['type'] == 'spell' or data['type'] == 'trap'):
-            data['spell_trap_property'] = (
-                card.find('th a[title="Property"]').eq(0).parents('tr').eq(0)
-                .find('td a').eq(0).text())
+        elif (data['type'] == 'Spell Card' or data['type'] == 'Trap Card'):
+            data['spell_trap_property'] = list(cardtable[1]('td p').items("a"))[0].text()
 
         if (data['type'] == 'monster'):
             for i, m_type in enumerate(data['monster_types']):
                 data['monster_types'][i] = data['monster_types'][i].strip()
 
-        description_element = card.find('.cardtablespanrow').html()        
+        description_element = cardtable[-1]('td div').html()
         description_element = re.sub(r'</dt>', ': </dt>' + BREAK_TOKEN, description_element)
         description_element = re.sub(r'</dd>', '</dd>' + BREAK_TOKEN, description_element)
         description_element = re.sub(r'<br ?/?>', BREAK_TOKEN, description_element)
         description_element = re.sub(r'<a href=[^>]+>', '', description_element)
         description_element = re.sub(r'</a>', '', description_element)
         description_element = pq(description_element).text()
-        
-        data['description'] = process_string(description_element)     
-        data['description'] = data['description'].replace(BREAK_TOKEN, '\n')
-        data['description'] = re.sub(r':(?=\w)', ': ', data['description'])
-        data['description'] = re.sub(r'\.(?=\w)', '. ', data['description'])
+        description_element = description_element.replace(BREAK_TOKEN, '\n')
+        description_element = re.sub(r':(?=\w)', ': ', description_element)
+        data['description'] = re.sub(r'\.(?=\w)', '. ', description_element)
 
         return data
         
@@ -204,7 +182,7 @@ def formatOCGData(data):
         formatted['text'] = data['description'].replace('\n', '  \n')
         formatted['cardtype'] = data['type']
         
-        if formatted['cardtype'].lower() == 'monster':
+        if formatted['cardtype'] == 'Monster Card':
             formatted['attribute'] = data['monster_attribute'].upper()
             formatted['types'] = data['monster_types']
 
@@ -254,7 +232,7 @@ def getCardData(searchText):
                 wikiURL = getWikiaURL(searchText)
             
             if (wikiURL):
-                ocgData = getOCGCardData(wikiURL)               
+                ocgData = getOCGCardData(wikiURL)
                 formattedData = formatOCGData(ocgData)
 
                 if formattedData:
