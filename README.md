@@ -8,4 +8,5 @@ YGOLB is written in Python for use with Python 3.8. There's a requirements.txt i
 YGOLB uses PRAW (a Python library) to interface with Reddit through the /u/YGOLinkBot account. It will then look through the new 50 or so comments once every minute or so, looking for the appropriate symbols. Once it's found one, it takes what's between the symbols and searches for it on various databases. If it finds it it makes a comment.
 
 ## Future work
+- Add card pricing information
 - Add archetype linking?
