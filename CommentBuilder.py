@@ -1,3 +1,4 @@
+from ErrorMailer import SendErrorMail
 import CardDataHandler
 import DatabaseHandler
 import re
@@ -78,8 +79,8 @@ def formatCardData(card, isExpanded):
                     wikia = '[Yugipedia]({})'.format(card['wikia']),
                     infosyntax = ', ' if card['pricedata'] else '',
                     pricedata = '[($)]({})'.format(card['pricedata']) if card['pricedata'] else '')
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
 
 def buildRequestComment(cardname, isExpanded):
     data = CardDataHandler.getCardData(cardname)

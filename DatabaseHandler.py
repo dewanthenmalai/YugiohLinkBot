@@ -3,6 +3,7 @@ DatabaseHandler.py
 Handles all connections to the database. The database runs on PostgreSQL and is connected to via psycopg2.
 '''
 
+from ErrorMailer import SendErrorMail
 from functools import lru_cache
 import psycopg2
 import traceback
@@ -19,25 +20,28 @@ def setup():
     try:
         cur.execute('CREATE TABLE cardnames (id SERIAL PRIMARY KEY, name varchar(320))')
         conn.commit()
-    except Exception:
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
 
     #Create requests table
     try:
         cur.execute('CREATE TABLE requests (id SERIAL PRIMARY KEY, name varchar(320), requester varchar(50), subreddit varchar(50), requesttimestamp timestamp DEFAULT current_timestamp)')
         conn.commit()
-    except Exception:
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
 
     #Create comments table
     try:
         cur.execute('CREATE TABLE comments (commentid varchar(16) PRIMARY KEY, commenter varchar(50), subreddit varchar(50), hadRequest boolean, requesttimestamp timestamp DEFAULT current_timestamp)')
         conn.commit()
-    except Exception:
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
 
 @timing
 def updateTCGCardlist():
@@ -59,9 +63,10 @@ def updateTCGCardlist():
                     cur.execute("insert into cardnames (name) values (%s)", (card,))
                     conn.commit()
                     numOfChanges += 1
-                except:
+                except Exception as e:
                     cur.execute('ROLLBACK')
                     conn.commit()
+                    SendErrorMail(e, traceback.format_exc())
 
         if (not TCGArray) or (numOfChanges > 0):
             print('Building array.')
@@ -75,8 +80,8 @@ def updateTCGCardlist():
 
         print('Card set updated. Number of changes = ' + str(numOfChanges) + '.')
             
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         print('Card updating failed.')
 
 # Adds a comment to the "already seen" database. Also handles submissions, which have a similar ID structure.
@@ -86,10 +91,10 @@ def addComment(commentid, requester, subreddit, hadRequest):
         
         cur.execute('INSERT INTO comments (commentid, commenter, subreddit, hadRequest) VALUES (%s, %s, %s, %s)', (commentid, requester, subreddit, hadRequest))
         conn.commit()
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
 
 #Returns true if the comment/submission has already been checked.
 def commentExists(commentid):
@@ -99,10 +104,10 @@ def commentExists(commentid):
             return False
         else:
             return True
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
         return True
         
 #Adds a request to the request-tracking database.
@@ -110,13 +115,13 @@ def addRequest(name, requester, subreddit):
     try:
         subreddit = str(subreddit).lower()
 
-        if ('nihilate' not in subreddit):
+        if ('dewey-defeats-truman' not in subreddit):
             cur.execute('INSERT INTO requests (name, requester, subreddit) VALUES (%s, %s, %s)', (name, requester, subreddit))
             conn.commit()
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
 
 @lru_cache(maxsize=128)
 def getClosestTCGCardname(searchText):
@@ -129,8 +134,8 @@ def getClosestTCGCardname(searchText):
         else:
             return None
         
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         print("Error finding cards.")
         return None
 
@@ -151,10 +156,10 @@ def getStats(searchText):
 
         return requestDict
 
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
         cur.execute('ROLLBACK')
         conn.commit()
+        SendErrorMail(e, traceback.format_exc())
         return None
 
 TCGArray = []
