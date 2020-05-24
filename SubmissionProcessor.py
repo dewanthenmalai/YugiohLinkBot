@@ -1,3 +1,4 @@
+from ErrorMailer import SendErrorMail
 import DatabaseHandler
 import re
 import traceback
@@ -47,7 +48,7 @@ class SubmissionProcessor(object):
                         print('')
                     DatabaseHandler.addComment(submission.id, author, submission.subreddit, False)
             except Exception as e:
-                traceback.print_exc()
+                SendErrorMail(e, traceback.format_exc())
                 print("Reddit probably broke when replying:" + str(e) + '\n')
 
     def convertCase(self, capitalise, reply):

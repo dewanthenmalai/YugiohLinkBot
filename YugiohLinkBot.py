@@ -7,6 +7,7 @@ import traceback
 
 import Config
 import DatabaseHandler
+from ErrorMailer import SendErrorMail
 from RequestHandler import RequestHandler
 from SubmissionProcessor import SubmissionProcessor
 
@@ -80,8 +81,10 @@ class YugiohLinkBot(object):
                             print('')
                         DatabaseHandler.addComment(comment.id, author, comment.subreddit, False)
                 except Exception as e:
+                    SendErrorMail(e, traceback.format_exc())
                     print("Reddit probably broke when replying:" + str(e) + '\n')
                     
         except Exception as e:
+            SendErrorMail(e, traceback.format_exc())
             print(e)
             pass

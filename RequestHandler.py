@@ -1,6 +1,7 @@
 import re
 import traceback
 
+from ErrorMailer import SendErrorMail
 from CommentBuilder import buildRequestComment
 from CommentBuilder import getSignature
 
@@ -47,5 +48,5 @@ class RequestHandler(object):
                 return reply
             else:
                 return None
-        except:
-            traceback.print_exc()
+        except Exception as e:
+            SendErrorMail(e, traceback.format_exc())

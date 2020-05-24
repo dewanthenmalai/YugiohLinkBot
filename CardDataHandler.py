@@ -6,6 +6,7 @@ from urllib.parse import quote_plus
 from Util import process_string, timing
 from pyquery import PyQuery as pq
 from DatabaseHandler import getClosestTCGCardname
+from ErrorMailer import SendErrorMail
 import traceback
 import re
 import pprint
@@ -24,8 +25,8 @@ def sanitiseCardname(cardname):
 def getOCGCardURL(searchText):
     try:
         searchResults = requests.get(OCG_BASE_URL + '?action=query&list=search&srsearch=' + searchText + '&srlimit=50&format=json')
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
 
     data = searchResults.json()['query']['search']
@@ -47,7 +48,8 @@ def getTCGCardImage(cardName):
 
     try:
         response = requests.get(TCG_BASE_URL + endPoint + quote_plus(cardName))
-    except:
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
     else:
         response.connection.close()
@@ -60,8 +62,8 @@ def getTCGCardData(cardName):
 
     try:
         response = requests.get(TCG_BASE_URL + endPoint + quote_plus(cardName))
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
     else:
         response.connection.close()
@@ -126,8 +128,8 @@ def getOCGCardData(url):
 
         return data
         
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
 
 def getPricesURL(cardName):
@@ -167,8 +169,8 @@ def formatTCGData(data):
             formatted['property'] = data['property']
 
         return formatted
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
 
 def formatOCGData(data):
@@ -204,8 +206,8 @@ def formatOCGData(data):
             formatted['property'] = data['spell_trap_property']
 
         return formatted
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
 
 def getCardData(searchText):
@@ -240,6 +242,6 @@ def getCardData(searchText):
                     return formattedData
                 else:
                     return None
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        SendErrorMail(e, traceback.format_exc())
         return None
