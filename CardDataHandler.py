@@ -157,6 +157,8 @@ def formatTCGData(data):
             formatted['att'] = data['atk']
             formatted['def'] = data['def']
 
+            formatted['pendulum_scale'] = None
+
             if 'link' in ' '.join(str(i[1]).lower() for i in enumerate(formatted['types'])):
                 formatted['leveltype'] = None
                 formatted['level'] = None
