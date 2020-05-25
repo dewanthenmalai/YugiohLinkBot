@@ -42,37 +42,6 @@ def getOCGCardURL(searchText):
 
     return None
 
-@lru_cache(maxsize=128)
-def getTCGCardImage(cardName):
-    endPoint = '/card_image/'
-
-    try:
-        response = requests.get(TCG_BASE_URL + endPoint + quote_plus(cardName))
-    except Exception as e:
-        SendErrorMail(e, traceback.format_exc())
-        return None
-    else:
-        response.connection.close()
-        if response.ok:
-            return response.url
-
-@lru_cache(maxsize=128)
-def getTCGCardData(cardName):
-    endPoint = '/card_data/'
-
-    try:
-        response = requests.get(TCG_BASE_URL + endPoint + quote_plus(cardName))
-    except Exception as e:
-        SendErrorMail(e, traceback.format_exc())
-        return None
-    else:
-        response.connection.close()
-        if response.ok:
-            json = response.json()
-            if json.get('status', '') == 'success':
-                json['data']['image'] = getTCGCardImage(cardName)
-                return json['data']
-
 def getOCGCardData(url):
     try:
         html = requests.get(url)
@@ -80,7 +49,7 @@ def getOCGCardData(url):
 
         cardtable = list(ocg('table[class="innertable"]')('tbody').items('tr'))
 
-        print("In getOCDCardData")
+        print("In getOCGCardData")
 
         data = {
             'image': ocg('div[class="cardtable-main_image-wrapper"]')('a img').attr["src"],
@@ -111,7 +80,7 @@ def getOCGCardData(url):
         elif (data['type'] == 'Spell Card' or data['type'] == 'Trap Card'):
             data['spell_trap_property'] = list(cardtable[1]('td p').items("a"))[0].text()
 
-        if (data['type'] == 'monster'):
+        if (data['type'] == 'Monster Card'):
             for i, m_type in enumerate(data['monster_types']):
                 data['monster_types'][i] = data['monster_types'][i].strip()
 
@@ -138,48 +107,13 @@ def getPricesURL(cardName):
 def getWikiaURL(cardName):
     return WIKI_URL + cardName.replace(" ", "_")
 
-def formatTCGData(data):
-    try:
-        formatted = {}
-        
-        formatted['name'] = data['name']
-        formatted['wikia'] = getWikiaURL(data['name'])
-        formatted['pricedata'] = getPricesURL(data['name'])
-        formatted['image'] = data['image']
-        formatted['text'] = re.sub('<!--(.*?)-->', '', data['text'].replace('\n\n', '  \n'))
-        formatted['cardtype'] = data['card_type']
-        
-        if formatted['cardtype'].lower() == 'monster':
-            formatted['attribute'] = data['family'].upper()
-            formatted['types'] = data['type'].split('/')
-
-            formatted['level'] = data['level']
-            formatted['att'] = data['atk']
-            formatted['def'] = data['def']
-
-            if 'link' in ' '.join(str(i[1]).lower() for i in enumerate(formatted['types'])):
-                formatted['leveltype'] = None
-                formatted['level'] = None
-                formatted['def'] = None
-            elif 'xyz' in ' '.join(str(i[1]).lower() for i in enumerate(formatted['types'])):
-                formatted['leveltype'] = 'Rank'
-            else:
-                formatted['leveltype'] = 'Level'
-        else:
-            formatted['property'] = data['property']
-
-        return formatted
-    except Exception as e:
-        SendErrorMail(e, traceback.format_exc())
-        return None
-
 def formatOCGData(data):
     try:
         formatted = {}
         
         formatted['name'] = data['name']
         formatted['wikia'] = getWikiaURL(data['name'])
-        formatted['pricedata'] = None
+        formatted['pricedata'] = getPricesURL(data['name'])
         formatted['image'] = data['image']
         formatted['text'] = data['description'].replace('\n', '  \n')
         formatted['cardtype'] = data['type']
@@ -212,36 +146,21 @@ def formatOCGData(data):
 
 def getCardData(searchText):
     try:
-        cardName = getClosestTCGCardname(searchText)
-        
-        if (cardName): #TCG
-            print('Searching YGOPrices for: ' + searchText)
-            tcgData = getTCGCardData(sanitiseCardname(cardName))
+        print('Searching Yugipedia for: ' + searchText)
+        wikiURL = getOCGCardURL(searchText)
 
-            formattedData = formatTCGData(tcgData)
+        if not wikiURL:
+            wikiURL = getWikiaURL(searchText)
+            
+        if (wikiURL):
+            ocgData = getOCGCardData(wikiURL)
+            formattedData = formatOCGData(ocgData)
 
             if formattedData:
-                print("(TCG) Found: " + tcgData['name'])
+                print("(OCG) Found: " + ocgData['name'])
+                return formattedData
             else:
-                print ("Card not found.")
-                
-            return formattedData
-        else: #OCG
-            print('Searching Yugipedia for: ' + searchText)
-            wikiURL = getOCGCardURL(searchText)
-
-            if not wikiURL:
-                wikiURL = getWikiaURL(searchText)
-            
-            if (wikiURL):
-                ocgData = getOCGCardData(wikiURL)
-                formattedData = formatOCGData(ocgData)
-
-                if formattedData:
-                    print("(OCG) Found: " + ocgData['name'])
-                    return formattedData
-                else:
-                    return None
+                return None
     except Exception as e:
         SendErrorMail(e, traceback.format_exc())
         return None
