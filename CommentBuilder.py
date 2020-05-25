@@ -31,7 +31,7 @@ def formatCardData(card, isExpanded):
         if isExpanded:
             requestStats = DatabaseHandler.getStats(card['name'])
             
-            if card['cardtype'] == 'Monster Card':
+            if card['cardtype'] == 'Monster Card' or card['cardtype'].lower() == 'monster':
                 return MONSTER_CARD_TEMPLATE_EXPANDED.format(
                     name = '[**{}**]'.format(card['name']),
                     image = '({})'.format(card['image']) if card['image'] else '(http://i.imgur.com/paNkvJ5.jpg)',
