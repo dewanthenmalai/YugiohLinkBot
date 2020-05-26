@@ -93,7 +93,8 @@ def getOCGCardData(url):
         description_element = pq(description_element).text()
         description_element = description_element.replace(BREAK_TOKEN, '\n')
         description_element = re.sub(r':(?=\w)', ': ', description_element)
-        data['description'] = re.sub(r'\.(?=\w)', '. ', description_element)
+        description_element = re.sub(r'\.(?=\w)', '. ', description_element)
+        data['description'] = re.sub(r'(\n)+', '\n', description_element)
 
         return data
         
